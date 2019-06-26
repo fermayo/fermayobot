@@ -7,13 +7,16 @@ const columns = {
 const calculate_column_id = async context => {
   const params = context.issue()
   const reviews = (await context.github.pulls.listReviews(params)).data
-  if(reviews.length === 0) {
+  const requested_reviewers = context.payload.pull_request.requested_reviewers
+  if(requested_reviewers.length === 0) {
+    return columns.IN_PROGRESS
+  } else if(reviews.length === 0) {
     return columns.PENDING_REVIEW
-  } else if(reviews.every(i => i.state === 'APPROVED')) {
+  } else if(reviews.every(i => i.state === 'APPROVED') && reviews.length >= requested_reviewers.length) {
     return columns.PENDING_MERGE
   } else if(reviews.some(i => i.state === 'REQUEST_CHANGES')) {
     return columns.IN_PROGRESS
-  } else if(reviews.some(i => i.state === 'PENDING')) {
+  } else if(reviews.some(i => i.state === 'PENDING') || reviews.length > 0) {
     return columns.PENDING_REVIEW
   } else {
     return columns.IN_PROGRESS
