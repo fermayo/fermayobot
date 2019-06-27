@@ -56,8 +56,9 @@ module.exports = app => {
   app.on(['pull_request.review_requested', 'pull_request.review_request_removed', 'pull_request_review'], async context => {
     const promises = []
     const card = await find_card_for_pr(context)
+    const target_column_id = await calculate_column_id(context)
     if(card) {
-      if(card.column_id !== await calculate_column_id(context)) {
+      if(card.column_id !== target_column_id) {
         if(card.column_id === columns.PENDING_MERGE) {
           const params = context.issue({body: ':shipit:'})
           promises.push(context.github.issues.createComment(params))
@@ -65,12 +66,12 @@ module.exports = app => {
         promises.push(context.github.projects.moveCard({
           card_id: card.card.id,
           position: 'top',
-          column_id: await calculate_column_id(context),
+          column_id: target_column_id,
         }))
       }
     } else {
       promises.push(context.github.projects.createCard({
-        column_id: await calculate_column_id(context),
+        column_id: target_column_id,
         content_id: context.payload.pull_request.id,
         content_type: 'PullRequest',
       }))
