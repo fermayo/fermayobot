@@ -38,17 +38,14 @@ const find_card_for_pr = async context => {
 module.exports = app => {
   app.log('Yay, the app was loaded!')
 
-  app.on(['pull_request.opened', 'pull_request.reopened'], async context => {
+  app.on('pull_request.opened', async context => {
     const promises = []
     const params = context.issue({assignees: [context.payload.pull_request.user.login]})
-    const card = await find_card_for_pr(context)
-    if(!card) {
-      promises.push(context.github.projects.createCard({
-        column_id: await calculate_column_id(context),
-        content_id: context.payload.pull_request.id,
-        content_type: 'PullRequest',
-      }))
-    }
+    promises.push(context.github.projects.createCard({
+      column_id: columns.IN_PROGRESS,
+      content_id: context.payload.pull_request.id,
+      content_type: 'PullRequest',
+    }))
     promises.push(context.github.issues.addAssignees(params))
     return Promise.all(promises)
   })
@@ -58,8 +55,8 @@ module.exports = app => {
     const card = await find_card_for_pr(context)
     const target_column_id = await calculate_column_id(context)
     if(card) {
-      if(card.column_id !== target_column_id) {
-        if(card.column_id === columns.PENDING_MERGE) {
+      if (card.column_id !== target_column_id) {
+        if (card.column_id === columns.PENDING_MERGE) {
           const params = context.issue({body: ':shipit:'})
           promises.push(context.github.issues.createComment(params))
         }
@@ -69,12 +66,6 @@ module.exports = app => {
           column_id: target_column_id,
         }))
       }
-    } else {
-      promises.push(context.github.projects.createCard({
-        column_id: target_column_id,
-        content_id: context.payload.pull_request.id,
-        content_type: 'PullRequest',
-      }))
     }
     return Promise.all(promises)
   })
