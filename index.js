@@ -12,11 +12,11 @@ const calculate_column_id = async context => {
     return columns.IN_PROGRESS
   } else if(reviews.length === 0) {
     return columns.PENDING_REVIEW
-  } else if(reviews.every(i => i.state === 'APPROVED') && reviews.length >= requested_reviewers.length) {
+  } else if(reviews.every(i => i.state.toLowerCase() === 'approved') && reviews.length >= requested_reviewers.length) {
     return columns.PENDING_MERGE
-  } else if(reviews.some(i => i.state === 'REQUEST_CHANGES')) {
+  } else if(reviews.some(i => i.state.toLowerCase() === 'request_changes')) {
     return columns.IN_PROGRESS
-  } else if(reviews.some(i => i.state === 'PENDING') || reviews.length > 0) {
+  } else if(reviews.some(i => i.state.toLowerCase() === 'pending') || reviews.length > 0) {
     return columns.PENDING_REVIEW
   } else {
     return columns.IN_PROGRESS
@@ -50,7 +50,7 @@ module.exports = app => {
     return Promise.all(promises)
   })
 
-  app.on(['pull_request.review_requested', 'pull_request_review'], async context => {
+  app.on(['pull_request.review_requested', 'pull_request.review_request_removed', 'pull_request_review'], async context => {
     const promises = []
     const card = await find_card_for_pr(context)
     if(card) {
