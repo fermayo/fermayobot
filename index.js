@@ -8,15 +8,15 @@ const calculate_column_id = async context => {
   const params = context.issue()
   const reviews = (await context.github.pulls.listReviews(params)).data
   const requested_reviewers = context.payload.pull_request.requested_reviewers
-  if(requested_reviewers.length === 0) {
+  if(requested_reviewers.length === 0 && reviews.length === 0) {
     return columns.IN_PROGRESS
-  } else if(reviews.length === 0) {
+  } else if(requested_reviewers.length > 0 || reviews.length === 0) {
     return columns.PENDING_REVIEW
-  } else if(reviews.every(i => i.state.toLowerCase() === 'approved') && reviews.length >= requested_reviewers.length) {
+  } else if(reviews.every(i => i.state.toLowerCase() === 'approved')) {
     return columns.PENDING_MERGE
   } else if(reviews.some(i => i.state.toLowerCase() === 'request_changes')) {
     return columns.IN_PROGRESS
-  } else if(reviews.some(i => i.state.toLowerCase() === 'pending') || reviews.length > 0) {
+  } else if(reviews.some(i => i.state.toLowerCase() === 'pending') || reviews.some(i => i.state.toLowerCase() === 'commented')) {
     return columns.PENDING_REVIEW
   } else {
     return columns.IN_PROGRESS
