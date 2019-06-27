@@ -41,11 +41,14 @@ module.exports = app => {
   app.on(['pull_request.opened', 'pull_request.reopened'], async context => {
     const promises = []
     const params = context.issue({assignees: [context.payload.pull_request.user.login]})
-    promises.push(context.github.projects.createCard({
-      column_id: await calculate_column_id(context),
-      content_id: context.payload.pull_request.id,
-      content_type: 'PullRequest',
-    }))
+    const card = await find_card_for_pr(context)
+    if(!card) {
+      promises.push(context.github.projects.createCard({
+        column_id: await calculate_column_id(context),
+        content_id: context.payload.pull_request.id,
+        content_type: 'PullRequest',
+      }))
+    }
     promises.push(context.github.issues.addAssignees(params))
     return Promise.all(promises)
   })
