@@ -56,7 +56,7 @@ module.exports = app => {
     const target_column_id = await calculate_column_id(context)
     if(card) {
       if (card.column_id !== target_column_id) {
-        if (card.column_id === columns.PENDING_MERGE) {
+        if (target_column_id === columns.PENDING_MERGE) {
           const params = context.issue({body: ':shipit:'})
           promises.push(context.github.issues.createComment(params))
         }
