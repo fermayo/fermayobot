@@ -27,12 +27,12 @@ const find_card_for_pr = async context => {
   const issue_url = context.payload.pull_request.issue_url
   for(let column_id of [columns.IN_PROGRESS, columns.PENDING_REVIEW, columns.PENDING_MERGE]) {
     const cards = (await context.github.projects.listCards({column_id})).data
-    context.log(cards)
     const card = cards.find(i => i.content_url === issue_url)
     if(card) {
       return {card, column_id}
     }
   }
+  // TODO: check pending cards
 }
 
 module.exports = app => {
