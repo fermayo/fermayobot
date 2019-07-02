@@ -6,17 +6,20 @@ const columns = {
 
 const calculate_column_id = async context => {
   const params = context.issue()
-  const reviews = (await context.github.pulls.listReviews(params)).data
-  const requested_reviewers = context.payload.pull_request.requested_reviewers
-  if(requested_reviewers.length === 0 && reviews.length === 0) {
+  let reviews = {}
+  // Update each reviewer status with the latest review
+  reviews = (await context.github.pulls.listReviews(params)).data.reduce((r, f) => {r[f.user.login] = f.state.toLowerCase(); return r}, reviews)
+  // Add requested reviewers as 'pending'
+  reviews = context.payload.pull_request.requested_reviewers.reduce((r, f) => {r[f.login] = 'pending'; return r}, reviews)
+  delete reviews[context.payload.pull_request.user.login]
+  const states = Object.values(reviews)
+  if(reviews.length === 0) {
     return columns.IN_PROGRESS
-  } else if(requested_reviewers.length > 0 || reviews.length === 0) {
-    return columns.PENDING_REVIEW
-  } else if(reviews.every(i => i.state.toLowerCase() === 'approved')) {
+  } else if(states.every(state => state === 'approved')) {
     return columns.PENDING_MERGE
-  } else if(reviews.some(i => i.state.toLowerCase() === 'request_changes')) {
+  } else if(states.some(state => state === 'request_changes')) {
     return columns.IN_PROGRESS
-  } else if(reviews.some(i => i.state.toLowerCase() === 'pending') || reviews.some(i => i.state.toLowerCase() === 'commented')) {
+  } else if(states.some(state => state === 'pending') || states.some(state => state === 'commented')) {
     return columns.PENDING_REVIEW
   } else {
     return columns.IN_PROGRESS
