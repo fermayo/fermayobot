@@ -13,7 +13,7 @@ const calculate_column_id = async context => {
   reviews = context.payload.pull_request.requested_reviewers.reduce((r, f) => {r[f.login] = 'pending'; return r}, reviews)
   delete reviews[context.payload.pull_request.user.login]
   const states = Object.values(reviews)
-  if(reviews.length === 0) {
+  if(states.length === 0) {
     return columns.IN_PROGRESS
   } else if(states.every(state => state === 'approved')) {
     return columns.PENDING_MERGE
